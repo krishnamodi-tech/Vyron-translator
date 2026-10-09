@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>VYRON AI Explainer — Intelligent Multilingual Document Simplifier</title>
+    
+    <!-- Mobile & PWA Meta Tags -->
+    <meta name="theme-color" content="#0a0c10">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Vyron">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="logo.jpg">
+
+    <!-- Fonts & Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="css/style.css">
+
+    <!-- Libraries: Vanilla-Tilt, Tesseract OCR, PDF.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vanilla-tilt/1.8.0/vanilla-tilt.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+</head>
+<body>
+    <!-- Background Watermark and Ambient Glow -->
+    <img src="logo.jpg" alt="Vyron Logo Watermark" class="logo-bg" id="logoBg">
+    <div class="ambient-glow"></div>
+    <div class="ambient-glow ambient-glow-2"></div>
+
+    <!-- Header & Brand Bar -->
+    <header>
+        <div class="brand">
+            <span class="logo-text">VYRON</span>
+            <span class="logo-divider">//</span>
+            <span class="logo-ai">AI EXPLAINER</span>
+        </div>
+        <div class="tagline">MULTILINGUAL DOCUMENT SIMPLIFIER & JARGON DECODER</div>
+        
+        <!-- Live Engine Connectivity & Transparency Status -->
+        <div class="engine-status-bar" id="engineStatusBar">
+            <span class="status-dot pulse" id="statusDot"></span>
+            <span class="status-text" id="statusText">Checking Engine Connectivity...</span>
+            <span class="config-help-pill" id="configHelpBtn" title="Backend Configuration Details">⚙️ Config Info</span>
+        </div>
+    </header>
+
+    <!-- 3D AI Neural Core Visualizer -->
+    <div class="ai-core-container" aria-hidden="true">
+        <div class="ai-core" id="aiCore">
+            <div class="core-center"></div>
+            <div class="ring"></div>
+            <div class="ring"></div>
+            <div class="ring"></div>
+        </div>
+    </div>
+
+    <!-- Main Application Flow -->
+    <main>
+        <!-- INPUT STAGE CARD -->
+        <section class="card input-card" data-tilt data-tilt-max="3" data-tilt-glare data-tilt-max-glare="0.1">
+            <div class="card-header">
+                <h2>1. INGEST DOCUMENT</h2>
+                <div class="sample-picker-wrapper">
+                    <label for="sampleDocSelect" class="sr-only">Load Sample Document</label>
+                    <select id="sampleDocSelect" class="sample-select">
+                        <option value="">⚡ Load Sample Notice for Demo...</option>
+                        <option value="tax">🏛️ Municipal Property Tax Demand Notice</option>
+                        <option value="university">🎓 University Exam & Scholarship Circular</option>
+                        <option value="bank">🏦 Bank KYC Account Inactivation Warning</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Input Tabs Navigation -->
+            <div class="input-tabs" role="tablist">
+                <button class="tab-btn active" id="tabText" role="tab" aria-selected="true" data-tab="paneText">📝 Direct Text</button>
+                <button class="tab-btn" id="tabPdf" role="tab" aria-selected="false" data-tab="panePdf">📄 PDF File</button>
+                <button class="tab-btn" id="tabImage" role="tab" aria-selected="false" data-tab="paneImage">🖼️ Image Upload</button>
+                <button class="tab-btn" id="tabCamera" role="tab" aria-selected="false" data-tab="paneCamera">📷 Live Camera</button>
+            </div>
+
+            <!-- PANE 1: Direct Text Input -->
+            <div class="tab-pane active" id="paneText">
+                <textarea id="sourceText" placeholder="Paste complex government notices, legal letters, court orders, or official guidelines here..." rows="6"></textarea>
+                <div class="text-meta-row">
+                    <span id="charCount">0 characters</span>
+                    <button class="ghost-btn" id="clearTextBtn" type="button">Clear</button>
+                </div>
+            </div>
+
+            <!-- PANE 2: PDF Upload (Drag & Drop) -->
+            <div class="tab-pane" id="panePdf">
+                <div class="dropzone" id="pdfDropzone">
+                    <div class="dropzone-icon">📄</div>
+                    <div class="dropzone-text">Drag & drop your PDF notice here, or <span class="highlight">Browse File</span></div>
+                    <div class="dropzone-sub">Supports scanned and digital official PDF documents up to 15MB</div>
+                    <input type="file" id="pdfFileInput" accept="application/pdf" style="display: none;">
+                </div>
+                <div class="file-preview-card" id="pdfPreviewCard" style="display: none;">
+                    <div class="file-info">
+                        <span class="file-name" id="pdfFileName">document.pdf</span>
+                        <span class="file-meta" id="pdfFileMeta">0 Pages | 0 KB</span>
+                    </div>
+                    <button class="icon-btn remove-file-btn" id="removePdfBtn" title="Remove PDF">✕</button>
+                </div>
+            </div>
+
+            <!-- PANE 3: Image Upload (Drag & Drop + OCR) -->
+            <div class="tab-pane" id="paneImage">
+                <div class="dropzone" id="imageDropzone">
+                    <div class="dropzone-icon">🖼️</div>
+                    <div class="dropzone-text">Drag & drop document photo, or <span class="highlight">Select Image</span></div>
+                    <div class="dropzone-sub">Supports JPG, PNG, WEBP official receipts & letters</div>
+                    <input type="file" id="imageFileInput" accept="image/png, image/jpeg, image/jpg, image/webp" style="display: none;">
+                </div>
+                <div class="image-preview-container" id="imagePreviewContainer" style="display: none;">
+                    <img id="imagePreview" alt="Document Preview">
+                    <div class="image-meta">
+                        <span id="imageMetaText">image.jpg</span>
+                        <button class="ghost-btn" id="removeImageBtn" type="button">Remove</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PANE 4: Live Camera Scan (WebRTC) -->
+            <div class="tab-pane" id="paneCamera">
+                <div id="cameraContainer" class="camera-box" style="display: none;">
+                    <video id="cameraFeed" autoplay playsinline></video>
+                    <div class="camera-controls">
+                        <button id="captureBtn" class="primary-btn" type="button">📸 Capture Document</button>
+                        <button id="cancelCameraBtn" class="ghost-btn" type="button">Cancel</button>
+                    </div>
+                </div>
+                <div class="camera-placeholder" id="cameraPlaceholder">
+                    <p>Point your smartphone or webcam at the physical notice</p>
+                    <button class="icon-btn" id="startCameraBtn" type="button">📷 Open Camera Feed</button>
+                </div>
+            </div>
+
+            <!-- OCR / Ingestion Live Progress Bar -->
+            <div class="ocr-progress-container" id="ocrProgressContainer" style="display: none;">
+                <div class="ocr-status-label" id="ocrStatusLabel">Running Optical Character Recognition (OCR)...</div>
+                <div class="progress-bar-bg">
+                    <div class="progress-bar-fill" id="ocrProgressBar" style="width: 0%;"></div>
+                </div>
+            </div>
+
+            <!-- LANGUAGE & EXPLANATION SETTINGS -->
+            <div class="settings-grid">
+                <!-- Target Language Selector with Quick Search -->
+                <div class="setting-item">
+                    <label for="targetLang">TARGET LANGUAGE</label>
+                    <div class="select-wrapper">
+                        <select id="targetLang">
+                            <optgroup label="Primary Indian Languages">
+                                <option value="hi" selected>हिन्दी (Hindi)</option>
+                                <option value="en">English (Universal)</option>
+                                <option value="bn">বাংলা (Bengali)</option>
+                                <option value="te">తెలుగు (Telugu)</option>
+                                <option value="mr">मराठी (Marathi)</option>
+                                <option value="ta">தமிழ் (Tamil)</option>
+                                <option value="gu">ગુજરાતી (Gujarati)</option>
+                                <option value="kn">ಕನ್ನಡ (Kannada)</option>
+                                <option value="ml">മലയാളം (Malayalam)</option>
+                                <option value="pa">ਪੰਜਾਬੀ (Punjabi)</option>
+                                <option value="or">ଓଡ଼ିଆ (Odia)</option>
+                                <option value="as">অসমীয়া (Assamese)</option>
+                                <option value="ur">اردو (Urdu)</option>
+                            </optgroup>
+                            <optgroup label="International Languages">
+                                <option value="es">Español (Spanish)</option>
+                                <option value="fr">Français (French)</option>
+                                <option value="de">Deutsch (German)</option>
+                            </optgroup>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Explanation Level Selector -->
+                <div class="setting-item">
+                    <label>EXPLANATION LEVEL</label>
+                    <div class="level-segmented-control" role="radiogroup">
+                        <label class="level-option">
+                            <input type="radio" name="explanationLevel" value="very_simple">
+                            <span>👶 Layman (5th Grader)</span>
+                        </label>
+                        <label class="level-option">
+                            <input type="radio" name="explanationLevel" value="standard" checked>
+                            <span>🧑‍💼 Standard (Clear)</span>
+                        </label>
+                        <label class="level-option">
+                            <input type="radio" name="explanationLevel" value="detailed">
+                            <span>⚖️ Detailed (Legal)</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SUBMIT ACTION BUTTON -->
+            <button class="primary-btn submit-btn" id="translateBtn" type="button">
+                <span class="btn-text">DECODE & EXPLAIN DOCUMENT</span>
+                <span class="btn-icon">➔</span>
+            </button>
+        </section>
+
+        <!-- MULTI-STAGE PROGRESS PIPELINE STEPPER -->
+        <div class="processing-pipeline" id="processingPipeline" style="display: none;">
+            <div class="pipeline-header">
+                <span class="pipeline-title">DOCUMENT COMPREHENSION PIPELINE</span>
+                <span class="pipeline-status-text" id="pipelineStatusText">Analyzing...</span>
+            </div>
+            <div class="steps-row">
+                <div class="step-node" id="step1">
+                    <div class="step-circle">1</div>
+                    <div class="step-label">Extract Text</div>
+                </div>
+                <div class="step-line" id="line1"></div>
+                <div class="step-node" id="step2">
+                    <div class="step-circle">2</div>
+                    <div class="step-label">Translate</div>
+                </div>
+                <div class="step-line" id="line2"></div>
+                <div class="step-node" id="step3">
+                    <div class="step-circle">3</div>
+                    <div class="step-label">Simplify Intent</div>
+                </div>
+                <div class="step-line" id="line3"></div>
+                <div class="step-node" id="step4">
+                    <div class="step-circle">4</div>
+                    <div class="step-label">Decode Jargon</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ERROR NOTIFICATION BANNER -->
+        <div class="error-banner" id="errorBanner" style="display: none;">
+            <div class="error-icon">⚠️</div>
+            <div class="error-content">
+                <div class="error-title" id="errorTitle">Processing Error</div>
+                <div class="error-msg" id="errorMsg">Something went wrong.</div>
+            </div>
+            <button class="ghost-btn" id="retryBtn" type="button">Retry</button>
+        </div>
+
+        <!-- RESULTS DASHBOARD -->
+        <section class="results-dashboard" id="resultsWrapper" style="display: none;">
+            <!-- Results View Navigation Tabs -->
+            <div class="results-nav-tabs">
+                <button class="res-tab active" data-view="viewSimple">✅ Simple Meaning</button>
+                <button class="res-tab" data-view="viewActions">🎯 What You Need To Do</button>
+                <button class="res-tab" data-view="viewJargon">💡 Jargon Decoded</button>
+                <button class="res-tab" data-view="viewTranslation">🌐 Full Translation</button>
+                <button class="res-tab" data-view="viewSource">📜 Original Source</button>
+            </div>
+
+            <!-- RESULT VIEW 1: Simple Meaning & Audio -->
+            <div class="result-view-panel active" id="viewSimple">
+                <div class="result-card" data-tilt data-tilt-max="2">
+                    <div class="panel-header">
+                        <h3>DOCUMENT PURPOSE & PLAIN SUMMARY</h3>
+                        <div class="badge" id="documentTypeBadge">Government Notice</div>
+                    </div>
+
+                    <!-- Overall Purpose Card -->
+                    <div class="purpose-highlight-box">
+                        <div class="purpose-label">CORE PURPOSE IN 30 SECONDS</div>
+                        <p id="simpleOverallPurpose">Extracting core purpose...</p>
+                    </div>
+
+                    <!-- Simplified Explanation Body -->
+                    <div class="explanation-body" id="simpleExplanationBody"></div>
+
+                    <!-- Key Takeaways -->
+                    <div class="takeaways-box" id="takeawaysBox" style="display: none;">
+                        <h4>📌 KEY TAKEAWAYS</h4>
+                        <ul id="takeawaysList"></ul>
+                    </div>
+
+                    <!-- Ambiguities / Warnings -->
+                    <div class="ambiguities-box" id="ambiguitiesBox" style="display: none;">
+                        <span class="warning-icon">⚠️</span>
+                        <div id="ambiguitiesText"></div>
+                    </div>
+
+                    <!-- Audio TTS & Action Toolbar -->
+                    <div class="voice-and-actions-toolbar">
+                        <div class="audio-controls-group">
+                            <button class="primary-pill-btn" id="playAudioBtn" type="button">
+                                <span id="playAudioIcon">🔊</span>
+                                <span id="playAudioText">Play Audio (Jarvis Voice)</span>
+                            </button>
+                            <button class="icon-btn audio-btn" id="pauseAudioBtn" type="button" title="Pause Speech" style="display: none;">⏸️ Pause</button>
+                            <button class="icon-btn audio-btn" id="stopAudioBtn" type="button" title="Stop Speech" style="display: none;">⏹️ Stop</button>
+                            
+                            <select id="speechRateSelect" class="speech-rate-select" title="Speech Speed">
+                                <option value="0.75">0.75x (Slow)</option>
+                                <option value="0.85" selected>0.85x (Jarvis)</option>
+                                <option value="1.0">1.0x (Normal)</option>
+                            </select>
+                        </div>
+
+                        <div class="secondary-actions-group">
+                            <button class="ghost-btn" id="simplifyMoreBtn" type="button">⚡ Explain More Simply</button>
+                            <button class="ghost-btn" id="copySimpleBtn" type="button">📋 Copy</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RESULT VIEW 2: What You Need To Do (Action Matrix) -->
+            <div class="result-view-panel" id="viewActions">
+                <div class="result-card action-matrix-card" data-tilt data-tilt-max="2">
+                    <div class="panel-header">
+                        <h3 class="highlight-title">🎯 REQUIRED ACTIONS & CITIZEN CHECKLIST</h3>
+                        <span class="badge badge-accent">Ground Truth Verified</span>
+                    </div>
+
+                    <!-- Required Actions List -->
+                    <div class="action-section">
+                        <h4>Immediate Steps To Take:</h4>
+                        <div class="action-checklist" id="actionChecklist"></div>
+                    </div>
+
+                    <!-- Structured Meta Grid (Deadlines, Fees, Documents, Contacts) -->
+                    <div class="action-grid">
+                        <div class="action-stat-box deadline-box">
+                            <div class="stat-icon">⏰</div>
+                            <div class="stat-title">DEADLINE & DATES</div>
+                            <div class="stat-val" id="actionDeadline">Not specified in the provided document</div>
+                        </div>
+
+                        <div class="action-stat-box fee-box">
+                            <div class="stat-icon">💰</div>
+                            <div class="stat-title">FEES & PAYMENTS</div>
+                            <div class="stat-val" id="actionFees">Not specified in the provided document</div>
+                        </div>
+
+                        <div class="action-stat-box doc-box">
+                            <div class="stat-icon">📁</div>
+                            <div class="stat-title">DOCUMENTS REQUIRED</div>
+                            <div class="stat-val" id="actionDocuments">Not specified in the provided document</div>
+                        </div>
+
+                        <div class="action-stat-box penalty-box">
+                            <div class="stat-icon">⚠️</div>
+                            <div class="stat-title">CONSEQUENCES IF IGNORED</div>
+                            <div class="stat-val" id="actionPenalties">Not specified in the provided document</div>
+                        </div>
+                    </div>
+
+                    <!-- Eligibility & Contacts -->
+                    <div class="meta-details-row">
+                        <div class="meta-item">
+                            <span class="meta-label">👤 Eligibility / Target:</span>
+                            <span id="actionEligibility">Not specified</span>
+                        </div>
+                        <div class="meta-item">
+                            <span class="meta-label">📞 Official Helpline / Portals:</span>
+                            <span id="actionContact">Not specified</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RESULT VIEW 3: Jargon Decoded Interactive Dictionary -->
+            <div class="result-view-panel" id="viewJargon">
+                <div class="result-card" data-tilt data-tilt-max="2">
+                    <div class="panel-header">
+                        <h3>💡 OFFICIAL JARGON & LEGAL TERMS DECODED</h3>
+                        <span class="badge">Contextual Dictionary</span>
+                    </div>
+
+                    <!-- Interactive Term Search / Explainer -->
+                    <div class="term-search-bar">
+                        <input type="text" id="customTermInput" placeholder="Encountered another confusing word? Type it here to decode...">
+                        <button class="primary-btn" id="explainCustomTermBtn" type="button">Decode Term</button>
+                    </div>
+
+                    <!-- Jargon Cards Container -->
+                    <div class="jargon-grid" id="jargonCardsContainer"></div>
+                </div>
+            </div>
+
+            <!-- RESULT VIEW 4: Full Literal Translated Document -->
+            <div class="result-view-panel" id="viewTranslation">
+                <div class="result-card" data-tilt data-tilt-max="2">
+                    <div class="panel-header">
+                        <h3>🌐 FULL TRANSLATED DOCUMENT</h3>
+                        <div class="panel-actions">
+                            <button class="ghost-btn" id="copyTranslatedBtn" type="button">📋 Copy All</button>
+                            <button class="ghost-btn" id="downloadReportBtn" type="button">💾 Download Summary (.txt)</button>
+                        </div>
+                    </div>
+                    <div class="raw-document-box" id="literalTranslationBox"></div>
+                </div>
+            </div>
+
+            <!-- RESULT VIEW 5: Original Source Document -->
+            <div class="result-view-panel" id="viewSource">
+                <div class="result-card" data-tilt data-tilt-max="2">
+                    <div class="panel-header">
+                        <h3>📜 EXTRACTED SOURCE TEXT</h3>
+                        <span class="badge" id="sourceMetaBadge">Raw OCR / File Text</span>
+                    </div>
+                    <div class="raw-document-box source-box" id="rawSourceTextBox"></div>
+                </div>
+            </div>
+
+            <!-- RESET / TRANSLATE ANOTHER BAR -->
+            <div class="reset-footer-bar">
+                <button class="ghost-btn" id="resetWorkflowBtn" type="button">🔄 Translate Another Document</button>
+                <button class="ghost-btn danger" id="clearMemoryBtn" type="button">🗑️ Clear Document & Cache</button>
+            </div>
+        </section>
+
+        <!-- PRIVACY & RESPONSIBLE AI DISCLOSURE -->
+        <footer class="responsible-ai-footer">
+            <div class="privacy-notice">
+                <span>🔒 Privacy by Design: In-browser processing supported. Sensitive documents are not permanently stored.</span>
+            </div>
+            <div class="disclaimer-text">
+                ⚠️ Disclaimer: VYRON AI Explainer simplifies and translates public notices for digital comprehension. It does not replace official legal or statutory counsel.
+            </div>
+        </footer>
+    </main>
+
+    <!-- CONFIG / SETUP MODAL -->
+    <div class="modal-backdrop" id="configModal" style="display: none;">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3>🛠️ VYRON AI — Backend & Credentials Setup</h3>
+                <button class="modal-close-btn" id="closeConfigModalBtn">✕</button>
+            </div>
+            <div class="modal-body">
+                <p>VYRON AI is architected to work in <strong>two distinct modes</strong>:</p>
+                <div class="mode-info-box">
+                    <div class="mode-row">
+                        <span class="mode-tag green">🟢 AI Accelerated Mode</span>
+                        <p>Powered by Google Gemini 1.5 Flash on the FastAPI backend (<code>main.py</code>). Provides clause-by-clause legal breakdown and advanced contextual jargon extraction.</p>
+                    </div>
+                    <div class="mode-row">
+                        <span class="mode-tag yellow">🟡 Client Hybrid Mode</span>
+                        <p>Runs directly via live free translation endpoints, client-side Tesseract.js OCR, and Web Speech API. Completely functional even without cloud API keys!</p>
+                    </div>
+                </div>
+
+                <h4>How to add a Gemini API Key:</h4>
+                <ol>
+                    <li>Get a free key from <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener">Google AI Studio</a>.</li>
+                    <li>Open <code>.env</code> in this project and set <code>GEMINI_API_KEY=your_key_here</code>.</li>
+                    <li>Restart the backend server: <code>python main.py</code>.</li>
+                </ol>
+
+                <div class="status-summary" id="modalBackendStatus">
+                    Checking backend connection at <code>http://127.0.0.1:8000/api/health</code>...
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Application Logic -->
+    <script src="js/app.js"></script>
+</body>
+</html>
